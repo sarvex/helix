@@ -677,7 +677,10 @@ impl Component for EditorView {
 
     fn render(&self, mut area: Rect, surface: &mut Surface, cx: &mut Context) {
         // clear with background color
-        surface.set_style(area, cx.editor.theme.get("ui.background"));
+        let bg = cx.editor.theme.get("ui.background");
+        surface.add_change(termwiz::surface::Change::ClearScreen(
+            bg.bg.expect("no bg color set!").into(),
+        ));
 
         // if the terminal size suddenly changed, we need to trigger a resize
         cx.editor

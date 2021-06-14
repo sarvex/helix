@@ -134,15 +134,27 @@ impl Compositor {
         // TODO: need to recalculate view tree if necessary
 
         let area = self.size();
-        let surface = &mut self.terminal;
 
         for layer in &self.layers {
-            layer.render(area, surface, cx)
+            layer.render(area, &mut self.terminal, cx)
         }
 
         let pos = self
             .cursor_position(area, cx.editor)
-            .map(|pos| (pos.col as u16, pos.row as u16));
+            .map(|pos| (pos.col, pos.row));
+
+        use termwiz::surface::{Change, CursorVisibility, Position};
+        if let Some(pos) = pos {
+            self.terminal
+                .add_change(Change::CursorVisibility(CursorVisibility::Visible));
+            self.terminal.add_change(Change::CursorPosition {
+                x: Position::Absolute(pos.0),
+                y: Position::Absolute(pos.1),
+            });
+        } else {
+            self.terminal
+                .add_change(Change::CursorVisibility(CursorVisibility::Hidden));
+        }
 
         // TODO: set cursor pos
         self.terminal.flush().expect("failed to flush");
