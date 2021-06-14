@@ -1,5 +1,5 @@
 use crate::{
-    buffer::Buffer,
+    buffer::{Buffer, SurfaceExt},
     layout::Rect,
     style::Style,
     symbols::line,

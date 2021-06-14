@@ -19,8 +19,7 @@ use crossterm::{
     event::{read, Event, EventStream, KeyCode, KeyEvent, KeyModifiers},
 };
 use tui::{
-    backend::CrosstermBackend,
-    buffer::Buffer as Surface,
+    buffer::{Buffer as Surface, SurfaceExt},
     layout::Rect,
     style::{Color, Modifier, Style},
 };
@@ -271,12 +270,8 @@ impl EditorView {
                             // for i in area.left()..area.right() and
                             // area.right = x + width !!! which shouldn't be > then surface.area.right()
                             // This is checked by a debug_assert! in Buffer::index_of
-                            ((end.col - start.col) as u16 + 1).min(
-                                surface
-                                    .area
-                                    .width
-                                    .saturating_sub(viewport.x + start.col as u16),
-                            ),
+                            ((end.col - start.col) as u16 + 1)
+                                .min(viewport.width.saturating_sub(viewport.x + start.col as u16)),
                             1,
                         ),
                         selection_style,

@@ -66,8 +66,12 @@ pub trait Component: Any + AnyComponent {
 
 use anyhow::Error;
 use std::io::stdout;
-use tui::backend::CrosstermBackend;
-type Terminal = tui::terminal::Terminal<CrosstermBackend<std::io::Stdout>>;
+use termwiz::{
+    caps::Capabilities,
+    terminal::buffered::BufferedTerminal,
+    terminal::{new_terminal, SystemTerminal},
+};
+type Terminal = BufferedTerminal<SystemTerminal>;
 
 pub struct Compositor {
     layers: Vec<Box<dyn Component>>,
@@ -75,9 +79,8 @@ pub struct Compositor {
 }
 
 impl Compositor {
-    pub fn new() -> Result<Self, Error> {
-        let backend = CrosstermBackend::new(stdout());
-        let mut terminal = Terminal::new(backend)?;
+    pub fn new() -> Result<Self, termwiz::Error> {
+        let terminal = BufferedTerminal::new(SystemTerminal::new(Capabilities::new_from_env()?)?)?;
         Ok(Self {
             layers: Vec::new(),
             terminal,
@@ -85,13 +88,13 @@ impl Compositor {
     }
 
     pub fn size(&self) -> Rect {
-        self.terminal.size().expect("couldn't get terminal size")
+        let (width, height) = self.terminal.dimensions();
+        Rect::new(0, 0, width as u16, height as u16)
     }
 
+    // TODO: pass in usize
     pub fn resize(&mut self, width: u16, height: u16) {
-        self.terminal
-            .resize(Rect::new(0, 0, width, height))
-            .expect("Unable to resize terminal")
+        self.terminal.resize(width as usize, height as usize)
     }
 
     pub fn push(&mut self, mut layer: Box<dyn Component>) {
@@ -122,16 +125,16 @@ impl Compositor {
     }
 
     pub fn render(&mut self, cx: &mut Context) {
-        let area = self
-            .terminal
-            .autoresize()
-            .expect("Unable to determine terminal size");
+        // TODO: autoresize
+        // let area = self
+        //     .terminal
+        //     .autoresize()
+        //     .expect("Unable to determine terminal size");
 
         // TODO: need to recalculate view tree if necessary
 
-        let surface = self.terminal.current_buffer_mut();
-
-        let area = *surface.area();
+        let area = self.size();
+        let surface = &mut self.terminal;
 
         for layer in &self.layers {
             layer.render(area, surface, cx)
@@ -141,7 +144,8 @@ impl Compositor {
             .cursor_position(area, cx.editor)
             .map(|pos| (pos.col as u16, pos.row as u16));
 
-        self.terminal.draw(pos);
+        // TODO: set cursor pos
+        self.terminal.flush().expect("failed to flush");
     }
 
     pub fn cursor_position(&self, area: Rect, editor: &Editor) -> Option<Position> {

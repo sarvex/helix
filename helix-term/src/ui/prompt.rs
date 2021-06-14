@@ -112,7 +112,7 @@ impl Prompt {
 }
 
 use tui::{
-    buffer::Buffer as Surface,
+    buffer::{Buffer as Surface, SurfaceExt},
     layout::Rect,
     style::{Color, Modifier, Style},
 };

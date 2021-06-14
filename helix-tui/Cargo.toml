@@ -8,13 +8,10 @@ A library to build rich terminal user interfaces or dashboards
 edition = "2018"
 license = "MPL-2.0"
 
-[features]
-default = ["crossterm"]
-
 [dependencies]
 bitflags = "1.0"
 cassowary = "0.3"
 unicode-segmentation = "1.2"
 unicode-width = "0.1"
-crossterm = { version = "0.19", optional = true }
+termwiz = "0.13"
 serde = { version = "1", "optional" = true, features = ["derive"]}
