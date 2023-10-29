@@ -6,9 +6,10 @@
 - [Linux](#linux)
   - [Ubuntu](#ubuntu)
   - [Fedora/RHEL](#fedorarhel)
-  - [Arch Linux community](#arch-linux-community)
+  - [Arch Linux extra](#arch-linux-extra)
   - [NixOS](#nixos)
   - [Flatpak](#flatpak)
+  - [Snap](#snap)
   - [AppImage](#appimage)
 - [macOS](#macos)
   - [Homebrew Core](#homebrew-core)
@@ -70,9 +71,9 @@ sudo dnf copr enable varlad/helix
 sudo dnf install helix
 ```
 
-### Arch Linux community
+### Arch Linux extra
 
-Releases are available in the `community` repository:
+Releases are available in the `extra` repository:
 
 ```sh
 sudo pacman -S helix
@@ -103,6 +104,16 @@ Helix is available on [Flathub](https://flathub.org/en-GB/apps/com.helix_editor.
 flatpak install flathub com.helix_editor.Helix
 flatpak run com.helix_editor.Helix
 ```
+
+### Snap
+
+Helix is available on [Snapcraft](https://snapcraft.io/helix) and can be installed with:
+
+```sh
+snap install --classic helix
+```
+
+This will install Helix as both `/snap/bin/helix` and `/snap/bin/hx`, so make sure `/snap/bin` is in your `PATH`.
 
 ### AppImage
 
@@ -175,19 +186,19 @@ RUSTFLAGS="-C target-feature=-crt-static"
 
 1. Clone the repository:
 
-```sh
-git clone https://github.com/helix-editor/helix
-cd helix
-```
+   ```sh
+   git clone https://github.com/helix-editor/helix
+   cd helix
+   ```
 
 2. Compile from source:
 
-```sh
-cargo install --path helix-term --locked
-```
+   ```sh
+   cargo install --path helix-term --locked
+   ```
 
-This command will create the `hx` executable and construct the tree-sitter
-grammars in the local `runtime` folder.
+   This command will create the `hx` executable and construct the tree-sitter
+   grammars in the local `runtime` folder.
 
 > 💡 Tree-sitter grammars can be fetched and compiled if not pre-packaged. Fetch
 > grammars with `hx --grammar fetch` and compile them with
@@ -213,7 +224,7 @@ Or, create a symbolic link:
 ln -Ts $PWD/runtime ~/.config/helix/runtime
 ```
 
-If the above command fails to create a symbolic link because the file exists either move `~/.config/helix/runtime` to a new location or delete it, then run the symlink command above again. 
+If the above command fails to create a symbolic link because the file exists either move `~/.config/helix/runtime` to a new location or delete it, then run the symlink command above again.
 
 #### Windows
 
@@ -246,11 +257,31 @@ following order:
 1. `runtime/` sibling directory to `$CARGO_MANIFEST_DIR` directory (this is intended for
   developing and testing helix only).
 2. `runtime/` subdirectory of OS-dependent helix user config directory.
-3. `$HELIX_RUNTIME`.
-4. `runtime/` subdirectory of path to Helix executable.
+3. `$HELIX_RUNTIME`
+4. Distribution-specific fallback directory (set at compile time—not run time—
+   with the `HELIX_DEFAULT_RUNTIME` environment variable)
+5. `runtime/` subdirectory of path to Helix executable.
 
 This order also sets the priority for selecting which file will be used if multiple runtime
 directories have files with the same name.
+
+#### Note to packagers
+
+If you are making a package of Helix for end users, to provide a good out of
+the box experience, you should set the `HELIX_DEFAULT_RUNTIME` environment
+variable at build time (before invoking `cargo build`) to a directory which
+will store the final runtime files after installation. For example, say you want
+to package the runtime into `/usr/lib/helix/runtime`. The rough steps a build
+script could follow are:
+
+1. `export HELIX_DEFAULT_RUNTIME=/usr/lib/helix/runtime`
+1. `cargo build --profile opt --locked --path helix-term`
+1. `cp -r runtime $BUILD_DIR/usr/lib/helix/`
+1. `cp target/opt/hx $BUILD_DIR/usr/bin/hx`
+
+This way the resulting `hx` binary will always look for its runtime directory in
+`/usr/lib/helix/runtime` if the user has no custom runtime in `~/.config/helix`
+or `HELIX_RUNTIME`.
 
 ### Validating the installation
 
